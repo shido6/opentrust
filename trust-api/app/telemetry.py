@@ -13,7 +13,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from prometheus_client import Counter, Histogram, make_asgi_app
+from prometheus_client import Counter, Gauge, Histogram, make_asgi_app
 
 from .config import (
     DEPLOYMENT_ENVIRONMENT,
@@ -72,6 +72,12 @@ redress_time_hist = Histogram(
     "trust_redress_time_hours",
     "Time to resolve redress requests in hours",
     buckets=[1, 4, 8, 24, 48, 72, 168],
+)
+
+relationship_score_gauge = Gauge(
+    "trust_relationship_score",
+    "Customer trust health — ratio of positive to total feedback",
+    ["customer_id"],
 )
 
 nlp_queries_total = Counter(

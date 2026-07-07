@@ -95,8 +95,11 @@ class DecisionResponse(BaseModel):
     trust_score: int = Field(..., ge=0, le=100)
     confidence: float = Field(..., ge=0.0, le=1.0)
     reason_codes: list[str] = Field(default_factory=list)
+    relationship_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Customer trust health — ratio of positive to total feedback")
+    challenge_mode: Optional[str] = Field(None, description="dtmf or silence — only set when decision is challenge")
     recommended_sip_response: Optional[str] = None
     redress_required: bool = False
+    redress_contact: Optional[dict] = Field(None, description="Human-readable contact info for redress path")
 
 
 class HealthResponse(BaseModel):

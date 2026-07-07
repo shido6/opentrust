@@ -6,11 +6,13 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import (
+    SIGNAL_WEIGHTS,
     THRESHOLD_WARN,
     THRESHOLD_CHALLENGE,
     THRESHOLD_BLOCK,
 )
 from ..models import CallRequest, DecisionType
+from ..repositories.forgiveness import get_relationship_score
 from .signals import SignalResult
 from .reputation import ip_reputation_signal, carrier_reputation_signal
 from .velocity import velocity_tracker
@@ -18,6 +20,8 @@ from .answer_rate import answer_rate_tracker
 from .dno import dno_signal
 from .policies import policy_signal
 from .stir_shaken import stir_shaken_signal
+from .prodigal import prodigal_signal
+from .forgiveness import forgiveness_signal
 
 logger = logging.getLogger("trust-api.scoring")
 
@@ -25,7 +29,7 @@ logger = logging.getLogger("trust-api.scoring")
 async def score_and_decide(
     session: AsyncSession,
     req: CallRequest,
-) -> tuple[DecisionType, int, float, list[str], list[SignalResult]]:
+) -> tuple[DecisionType, int, float, list[str], list[SignalResult], float]:
     # Evaluate all signals
     signals: list[SignalResult] = []
 
@@ -43,6 +47,10 @@ async def score_and_decide(
 
     # STIR/SHAKEN
     signals.append(stir_shaken_signal(req))
+
+    # Grace-Oriented Trust Engine signals
+    signals.append(await prodigal_signal(session, req))
+    signals.append(await forgiveness_signal(session, req))
 
     # Source carrier signal
     if req.source_carrier:
@@ -68,27 +76,31 @@ async def score_and_decide(
         total_weight += sig.weight
 
     trust_score = max(0, min(100, int(base_score + weighted_delta)))
-    confidence = min(1.0, total_weight / 8.0) if total_weight > 0 else 0.0
+    confidence = min(1.0, total_weight / 10.0) if total_weight > 0 else 0.0
 
     reason_codes = [s.reason_code for s in signals if s.reason_code]
+
+    # Relationship score — customer trust health based on feedback ratio
+    customer_id = req.to_number
+    relationship_score = await get_relationship_score(session, customer_id) or 0.5
 
     # Check for DNO/policy hard block
     for sig in signals:
         if sig.reason_code and sig.reason_code.startswith("dno_match"):
-            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals
+            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals, relationship_score
         if sig.reason_code and sig.reason_code.startswith("policy_block"):
-            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals
+            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals, relationship_score
         if sig.reason_code and sig.reason_code.startswith("policy_allow"):
-            return DecisionType.allow, trust_score, confidence, reason_codes, signals
+            return DecisionType.allow, trust_score, confidence, reason_codes, signals, relationship_score
 
     # Threshold-based decision
     if trust_score >= THRESHOLD_WARN:
-        return DecisionType.allow, trust_score, confidence, reason_codes, signals
+        return DecisionType.allow, trust_score, confidence, reason_codes, signals, relationship_score
     elif trust_score >= THRESHOLD_CHALLENGE:
-        return DecisionType.challenge, trust_score, confidence, reason_codes, signals
+        return DecisionType.challenge, trust_score, confidence, reason_codes, signals, relationship_score
 
     redress_required = trust_score < THRESHOLD_BLOCK
     if redress_required:
-        return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals
+        return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals, relationship_score
 
-    return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals
+    return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals, relationship_score

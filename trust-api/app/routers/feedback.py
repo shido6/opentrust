@@ -2,9 +2,10 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_db
+from ..database import get_db, CallRecord
 from ..models import FeedbackRequest, FeedbackResponse
 from ..repositories import feedback as feedback_repo
+from ..repositories.calls import get_call
 from ..telemetry import false_positive_counter, customer_override_counter
 
 logger = logging.getLogger("trust-api")
@@ -17,6 +18,16 @@ async def submit_feedback(req: FeedbackRequest, session: AsyncSession = Depends(
 
     if req.feedback_type.value == "wrongly_blocked":
         false_positive_counter.labels(carrier="unknown").inc()
+        call = await get_call(session, req.call_id)
+        if call:
+            logger.info(
+                "Forgiveness applied — caller reputation healed",
+                extra={
+                    "from_number": call.from_number,
+                    "customer_id": req.customer_id,
+                    "call_id": req.call_id,
+                },
+            )
     elif req.feedback_type.value == "wrongly_allowed":
         customer_override_counter.inc()
 

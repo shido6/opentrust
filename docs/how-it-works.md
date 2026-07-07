@@ -155,11 +155,11 @@ Why this matters:
 |---|---|---|
 | `ALLOW` | Route normally | Legitimate calls complete without friction |
 | `WARN` | Route with warning metadata | Customer gets context without losing the call |
-| `CHALLENGE` | Send to Asterisk IVR | Suspicious calls get friction before blocking |
+| `CHALLENGE` | Send to Asterisk silence challenge | Voice detection — no DTMF. Humans say "Hello?" and pass; bots hang up silently |
 | `VOICEMAIL` | Send to voicemail screening | Customer avoids interruption but can recover legitimate calls |
 | `RATE_LIMIT` | Throttle source or campaign | Reduces abuse without permanent blocking |
 | `BLOCK_DNO` | Deterministic policy block | Stops numbers that should not originate calls |
-| `BLOCK_ANALYTICS` | Analytics block with redress context | High-risk calls are stopped with evidence and recovery path |
+| `BLOCK_ANALYTICS` | Analytics block with 603+ redress path | High-risk calls stopped with evidence, human-readable appeal URL, and recovery path |
 
 ## Evidence Signals
 
@@ -175,6 +175,9 @@ OpenTrust SIP evaluates multiple signals:
 - User-Agent heuristics
 - Customer feedback
 - Redress outcomes
+- **Prodigal Son Signal** — grace bonus for repentant callers with past negative history but valid A attestation on a new pairing
+- **Forgiveness Signal** — reputation healing when a customer has previously marked calls from this number as wrongly blocked
+- **Relationship Score** — customer trust health metric derived from feedback ratio
 
 Each signal can produce a reason code. Reason codes are stored in `decision_events` and are returned in API responses.
 
@@ -211,6 +214,48 @@ That means an ITSP can connect OpenTrust SIP to:
 
 The goal is not "zero mistakes." The goal is explainable decisions and fast recovery.
 
+## The Grace-Oriented Trust Engine
+
+OpenTrust SIP is not just a risk-scoring engine. It is built around a design philosophy of radical mercy for the legitimate and radical clarity for the illegitimate.
+
+### Silence Challenge Instead Of "Press 7"
+
+The default challenge mode does not force callers through a DTMF maze. When a call is flagged as medium-risk, Asterisk answers and listens for voice activity using AMD (Answering Machine Detection). A human caller says "Hello?" naturally and is passed through. A robocaller or wardialer hangs up silently or plays a recorded message, and is rejected.
+
+This means:
+- No burden on legitimate callers.
+- Machines reveal themselves through behavior, not through failing a test.
+- The system extends grace by default.
+
+### Prodigal Son Signal
+
+The scoring engine includes a signal that looks for repentant callers: numbers with past negative history (DNO entries, fraud flags, prior blocks) that now arrive with full STIR/SHAKEN A attestation calling a number they have never called before.
+
+Instead of penalizing them for past behavior, the system adds a grace bonus of +20 points. The principle: there is more joy over one sinner who repents than over 99 righteous calls.
+
+### Forgiveness Via Customer Feedback
+
+When a customer marks a call as "wrongly blocked," the system forgives that caller's reputation. Future calls from that number to that customer get a strong positive signal. The feedback loop does not just improve analytics — it heals relationships.
+
+### Relationship Score Vs Risk Score
+
+Every decision now carries two scores:
+
+- **Risk Score** (0–100): How dangerous is this call?
+- **Relationship Score** (0.0–1.0): How healthy is our relationship with this customer?
+
+The Relationship Score is `1.0 - (wrongly_blocked_complaints / total_feedback)` — it drops when a customer frequently reports false positives. A declining Relationship Score is an early indicator of churn risk — the customer is filing more disputes because the system is generating false positives. ITSPs can monitor this on the Grafana dashboards and adjust thresholds before losing accounts.
+
+### SIP 603+ With Redress Path
+
+Blocked calls do not return a dead SIP code. They carry a `Reason: Q.850;cause=243` header with a human-readable redress URL and email address. Every blocked caller receives a personal invitation to appeal.
+
+This turns a rejection into a recovery path and supports regulatory compliance by demonstrating transparent blocking practices.
+
+### Carrier Accountability
+
+Carriers who refuse to implement STIR/SHAKEN or who consistently originate fraudulent traffic can be named transparently in SIP headers. This creates market pressure for compliance and gives ITSPs the tools to hold upstream carriers accountable.
+
 ## How The ITSP Wins
 
 The ITSP wins because OpenTrust SIP improves trust without turning call blocking into a black box.
@@ -229,9 +274,9 @@ Benefits:
 
 Operationally, the ITSP gets a defensible workflow:
 
-1. Observe calls and collect evidence.
+1. Observe calls and collect evidence. **(6+ months recommended — a single wrongly blocked bank call is a millstone.)**
 2. Warn customers and operators.
-3. Challenge suspicious calls.
+3. Challenge suspicious calls via silence detection — no DTMF, no "Press 7."
 4. Block deterministic DNO cases.
 5. Use feedback and redress to improve decisions.
 

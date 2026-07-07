@@ -7,6 +7,18 @@ Make call-blocking and fraud-prevention decisions explainable, observable, audit
 [!CAUTION]
 This is not "AI blocks calls." The engine recommends. The carrier controls policy. Every decision must be explainable and replayable.
 
+## Design Philosophy
+
+OpenTrust SIP is a **Grace-Oriented Trust Engine** — radical mercy for the legitimate, radical clarity for the illegitimate.
+
+- **No "Press 7"**: Challenge uses silence detection (AMD) — humans say "Hello?" and pass, machines reveal themselves by hanging up.
+- **Prodigal Son Signal**: A caller with past negative history who shows full STIR/SHAKEN A attestation to a new number gets a grace bonus instead of a penalty.
+- **Forgiveness Signal**: When a customer marks a call as "wrongly blocked," that caller's reputation is healed for future calls.
+- **SIP 603+ with Redress Path**: Every blocked response carries a human-readable appeal URL and email — a personal invitation to recovery.
+- **Relationship Score**: Tracked alongside risk score — measures customer trust health, not just fraud risk.
+
+See `docs/design-philosophy.md` for the full framework.
+
 ## Infographic
 
 ![OpenTrust SIP carrier trust platform infographic](opentrust.png)
@@ -39,11 +51,11 @@ Asterisk (only when media interaction needed)
 |---|---|
 | `ALLOW` | Route normally |
 | `WARN` | Route with customer-visible warning |
-| `CHALLENGE` | Send to Asterisk IVR / screening |
+| `CHALLENGE` | Send to Asterisk silence challenge (voice detection, no DTMF) |
 | `VOICEMAIL` | Send to voicemail screening |
 | `RATE_LIMIT` | Throttle source or campaign |
 | `BLOCK_DNO` | Deterministic policy block (DNO) |
-| `BLOCK_ANALYTICS` | Analytics-based block with notification |
+| `BLOCK_ANALYTICS` | Analytics-based block with 603+ redress path |
 
 ## Policy vs Analytics
 
@@ -57,13 +69,13 @@ Do not mix them. DNO match = deterministic policy. High risk score = probabilist
 
 ## Rollout Plan
 
-| Phase | Action |
-|---|---|
-| 1 — Observe | Score calls, no enforcement |
-| 2 — Warn | Dashboards, warnings, reporting |
-| 3 — Challenge | Asterisk IVR for medium-risk |
-| 4 — Block | DNO blocks + analytics blocks separated |
-| 5 — Closed-Loop | Feedback + redress → improved scoring |
+| Phase | Action | Duration |
+|---|---|---|
+| 1 — Observe | Score calls, no enforcement | 6+ months recommended |
+| 2 — Warn | Dashboards, warnings, reporting | Until trust score correlates |
+| 3 — Challenge | Asterisk silence challenge (no DTMF) for medium-risk | Gradual, customer by customer |
+| 4 — Block | DNO blocks + analytics blocks separated | After challenge data validates |
+| 5 — Closed-Loop | Feedback + redress → improved scoring | Continuous |
 
 ## SpoonFeed Installer
 
@@ -98,11 +110,13 @@ opentrust-sip/
     nlp-assistant.md
     compliance-readiness.md
     customer-itsp-readiness.md
+    design-philosophy.md
   kamailio/
     route-examples/
     trust-api.cfg
   asterisk/
-    ivr-challenge/
+    ivr-challenge/      (legacy DTMF "Press 7")
+    silence-challenge/  (grace-oriented — voice detection, no DTMF)
     voicemail-screening/
   trust-api/
     app/

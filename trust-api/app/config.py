@@ -51,6 +51,8 @@ SIGNAL_WEIGHTS = {
     "answer_rate": float(os.getenv("WEIGHT_ANSWER_RATE", "0.6")),
     "dno_match": float(os.getenv("WEIGHT_DNO_MATCH", "1.0")),
     "policy_eval": float(os.getenv("WEIGHT_POLICY_EVAL", "1.0")),
+    "prodigal_grace": float(os.getenv("WEIGHT_PRODIGAL_GRACE", "1.0")),
+    "forgiveness": float(os.getenv("WEIGHT_FORGIVENESS", "1.0")),
 }
 
 # Velocity (max calls per source in window seconds)
@@ -62,6 +64,20 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 # Reputation defaults
 DEFAULT_IP_REPUTATION = float(os.getenv("DEFAULT_IP_REPUTATION", "0.5"))
 DEFAULT_CARRIER_REPUTATION = float(os.getenv("DEFAULT_CARRIER_REPUTATION", "0.5"))
+
+# Grace-Oriented Trust Engine settings
+PRODIGAL_GRACE_BONUS = int(os.getenv("PRODIGAL_GRACE_BONUS", "20"))
+FORGIVENESS_BONUS = int(os.getenv("FORGIVENESS_BONUS", "15"))
+
+# Challenge mode: dtmf (legacy "Press 7") or silence (AMD-based voice detection)
+CHALLENGE_MODE = os.getenv("CHALLENGE_MODE", "silence")
+
+# When enabled, SIP 603+ responses include a human-readable redress path
+REDRESS_CONTACT_URL = os.getenv("REDRESS_CONTACT_URL", "")
+REDRESS_CONTACT_EMAIL = os.getenv("REDRESS_CONTACT_EMAIL", "")
+
+# When enabled, SIP responses shame carriers not implementing STIR/SHAKEN
+SHAME_BAD_CARRIERS = os.getenv("SHAME_BAD_CARRIERS", "false").lower() == "true"
 
 # NLP assistant provider. Default is deterministic/read-only local responses.
 NLP_PROVIDER = os.getenv("NLP_PROVIDER", "local")
