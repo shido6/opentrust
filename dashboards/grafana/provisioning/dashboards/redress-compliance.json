@@ -1,0 +1,79 @@
+{
+  "uid": "opentrust-redress-compliance",
+  "title": "OpenTrust SIP - Redress & Compliance",
+  "tags": ["opentrust", "redress", "compliance"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "title": "False Positive Feedback / hr",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(trust_false_positive_total[1h]))",
+          "legendFormat": "false positives"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "title": "Customer Overrides / hr",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(trust_customer_override_total[1h])",
+          "legendFormat": "overrides"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "title": "Redress Resolution p95",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(trust_redress_time_hours_bucket[24h])) by (le))",
+          "legendFormat": "p95 hours"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "h"}},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "title": "Analytics Blocks Requiring Redress Proxy",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(trust_decisions_total{decision=\"block_analytics\"}[1h]))",
+          "legendFormat": "analytics blocks"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "title": "False Positive Trend",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (carrier) (rate(trust_false_positive_total[15m]))",
+          "legendFormat": "{{carrier}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+    },
+    {
+      "title": "Redress Resolution Time Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "sum(rate(trust_redress_time_hours_bucket[24h])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+    }
+  ]
+}

@@ -56,10 +56,21 @@ For production ITSP deployments, use Gigapipe as the OpenTelemetry backend. See 
 | `trust.dno_matches` | Counter | DNO match count |
 | `trust.customer_override` | Counter | Customer override events |
 | `trust.redress_time` | Histogram | Time to resolve redress requests |
+| `nlp.queries.total` | Counter | NLP assistant queries by intent, provider, approval flag |
 
 ## Grafana Dashboards
 
-Default dashboards in `dashboards/grafana/`:
+Grafana dashboards are optional but useful for NOC screens, local development, and self-hosted ITSP operations. Gigapipe remains the recommended production evidence layer.
+
+Operator dashboard pack in `dashboards/grafana/provisioning/dashboards/`:
+
+- **Operator Overview** — Decision rate, trusted completion proxy, challenge/block rates, trust score distribution, latency
+- **Policy vs Analytics** — DNO blocks vs analytics blocks, decision mix, DNO matches, top analytics-blocked carriers
+- **Redress & Compliance** — False-positive feedback, customer overrides, redress p95, analytics blocks requiring redress
+- **Trust API Health** — API uptime, decision throughput, latency p99, carrier throughput
+- **NLP Assistant Safety** — NLP usage, approval-required requests, provider mix, intent mix
+
+Legacy starter dashboards are also included:
 
 - **Trust Overview** — Real-time decisions, scores, latency
 - **Carrier Reputation** — Per-carrier trust metrics

@@ -1,0 +1,106 @@
+{
+  "uid": "opentrust-operator-overview",
+  "title": "OpenTrust SIP - Operator Overview",
+  "tags": ["opentrust", "itsp", "trust"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "title": "Decisions / sec",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (decision) (rate(trust_decisions_total[5m]))",
+          "legendFormat": "{{decision}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "title": "Trusted Call Completion Proxy",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(trust_decisions_total{decision=~\"allow|warn\"}[15m])) / clamp_min(sum(rate(trust_decisions_total[15m])), 1)",
+          "legendFormat": "trusted %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "thresholds": {"steps": [{"color": "red", "value": null}, {"color": "orange", "value": 80}, {"color": "green", "value": 95}]}}
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "title": "Analytics Block Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(trust_decisions_total{decision=\"block_analytics\"}[15m])) / clamp_min(sum(rate(trust_decisions_total[15m])), 1)",
+          "legendFormat": "analytics block %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {"unit": "percent", "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "orange", "value": 2}, {"color": "red", "value": 5}]}}
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "title": "DNO Block Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(trust_decisions_total{decision=\"block_dno\"}[15m])) / clamp_min(sum(rate(trust_decisions_total[15m])), 1)",
+          "legendFormat": "dno block %"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percent"}},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4}
+    },
+    {
+      "title": "Challenge Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "100 * sum(rate(trust_decisions_total{decision=\"challenge\"}[15m])) / clamp_min(sum(rate(trust_decisions_total[15m])), 1)",
+          "legendFormat": "challenge %"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "percent"}},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4}
+    },
+    {
+      "title": "Trust Score Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "sum(rate(trust_score_bucket[5m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "title": "API Latency p50/p95/p99",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(trust_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(trust_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(trust_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    }
+  ]
+}

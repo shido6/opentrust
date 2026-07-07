@@ -74,6 +74,12 @@ redress_time_hist = Histogram(
     buckets=[1, 4, 8, 24, 48, 72, 168],
 )
 
+nlp_queries_total = Counter(
+    "nlp_queries_total",
+    "NLP assistant queries by intent, provider, and approval requirement",
+    ["intent", "provider", "requires_approval"],
+)
+
 
 def _parse_otlp_headers(raw_headers: str) -> dict[str, str]:
     headers: dict[str, str] = {}

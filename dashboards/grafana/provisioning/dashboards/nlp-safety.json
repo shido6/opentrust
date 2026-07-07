@@ -1,0 +1,56 @@
+{
+  "uid": "opentrust-nlp-safety",
+  "title": "OpenTrust SIP - NLP Assistant Safety",
+  "tags": ["opentrust", "nlp", "safety"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "title": "NLP Queries / hr",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(nlp_queries_total[1h]))",
+          "legendFormat": "queries"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "title": "Approval-Required Requests / hr",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(nlp_queries_total{requires_approval=\"true\"}[1h]))",
+          "legendFormat": "approval required"
+        }
+      ],
+      "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "green", "value": null}, {"color": "orange", "value": 1}, {"color": "red", "value": 10}]}}},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "title": "Queries By Provider",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (provider) (increase(nlp_queries_total[24h]))",
+          "legendFormat": "{{provider}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+    },
+    {
+      "title": "Queries By Intent",
+      "type": "barchart",
+      "targets": [
+        {
+          "expr": "sum by (intent) (increase(nlp_queries_total[24h]))",
+          "legendFormat": "{{intent}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+    }
+  ]
+}

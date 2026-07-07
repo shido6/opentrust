@@ -335,6 +335,17 @@ Before production:
 | NLP local | `POST /v1/nlp/query` | Evidence-grounded answer |
 | Gigapipe | Check traces/metrics in Gigapipe | `trust-api` service visible |
 | CDR update | `POST /v1/cdr` | Call completion updated |
+| Grafana dashboards | Open `http://localhost:3000` | OpenTrust dashboards provisioned |
+
+## Grafana Dashboards
+
+Compose provisions dashboards from `dashboards/grafana/provisioning/dashboards/` into Grafana. Use them for NOC screens and quick local validation:
+
+- `OpenTrust SIP - Operator Overview`
+- `OpenTrust SIP - Policy vs Analytics`
+- `OpenTrust SIP - Redress & Compliance`
+- `OpenTrust SIP - Trust API Health`
+- `OpenTrust SIP - NLP Assistant Safety`
 
 ## Rollback
 

@@ -1,0 +1,60 @@
+{
+  "uid": "opentrust-policy-vs-analytics",
+  "title": "OpenTrust SIP - Policy vs Analytics",
+  "tags": ["opentrust", "policy", "analytics"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "title": "Decision Mix",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (decision) (increase(trust_decisions_total[1h]))",
+          "legendFormat": "{{decision}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+    },
+    {
+      "title": "DNO vs Analytics Blocks",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(trust_decisions_total{decision=\"block_dno\"}[5m]))",
+          "legendFormat": "DNO policy block"
+        },
+        {
+          "expr": "sum(rate(trust_decisions_total{decision=\"block_analytics\"}[5m]))",
+          "legendFormat": "Analytics block"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0}
+    },
+    {
+      "title": "DNO Matches By Source",
+      "type": "barchart",
+      "targets": [
+        {
+          "expr": "sum by (source) (increase(trust_dno_matches_total[24h]))",
+          "legendFormat": "{{source}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "title": "Top Carriers By Analytics Blocks",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (carrier) (increase(trust_decisions_total{decision=\"block_analytics\"}[24h])))",
+          "legendFormat": "{{carrier}}",
+          "format": "table"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+    }
+  ]
+}

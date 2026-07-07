@@ -1,0 +1,69 @@
+{
+  "uid": "opentrust-api-health",
+  "title": "OpenTrust SIP - Trust API Health",
+  "tags": ["opentrust", "api", "sre"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "title": "Trust API Up",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"opentrust-api\"}",
+          "legendFormat": "up"
+        }
+      ],
+      "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "title": "Request Throughput Proxy",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(trust_decisions_total[5m]))",
+          "legendFormat": "decisions/sec"
+        }
+      ],
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "title": "Latency p99",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(trust_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"steps": [{"color": "green", "value": null}, {"color": "orange", "value": 0.25}, {"color": "red", "value": 0.5}]}}},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "title": "Decision Throughput By Carrier",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (carrier) (rate(trust_decisions_total[5m]))",
+          "legendFormat": "{{carrier}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+    },
+    {
+      "title": "Latency Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "sum(rate(trust_latency_seconds_bucket[5m])) by (le)",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+    }
+  ]
+}

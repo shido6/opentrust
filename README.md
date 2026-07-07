@@ -155,6 +155,14 @@ Set `NLP_PROVIDER=local`, `ollama`, `openai`, or `vultr` to choose the backend. 
 
 For compliance and investor diligence posture, see `docs/compliance-readiness.md`.
 
+## Grafana Dashboards
+
+Optional Grafana dashboards are provisioned under `dashboards/grafana/provisioning/dashboards/` for local development, NOC screens, and self-hosted operations.
+
+The operator pack includes overview, policy-vs-analytics, redress/compliance, API health, and NLP safety dashboards.
+
+Gigapipe remains the recommended production observability and audit investigation layer.
+
 ## Success Metrics
 
 Optimize for **trusted call completion**, not "calls blocked."
