@@ -1,3 +1,4 @@
+import json
 import os
 from dotenv import load_dotenv
 
@@ -22,6 +23,17 @@ LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
 
 API_KEY = os.getenv("API_KEY", "change-me-in-production")
 API_KEY_HEADER = os.getenv("API_KEY_HEADER", "X-API-Key")
+API_KEYS_RAW = os.getenv("API_KEYS", "")
+
+try:
+    API_KEYS = json.loads(API_KEYS_RAW) if API_KEYS_RAW else {}
+except json.JSONDecodeError:
+    API_KEYS = {}
+
+if not API_KEYS and API_KEY:
+    API_KEYS = {
+        API_KEY: {"tenant_id": "default", "role": "admin", "name": "legacy-api-key"}
+    }
 
 # Scoring thresholds (0-100)
 THRESHOLD_WARN = int(os.getenv("THRESHOLD_WARN", "70"))
@@ -44,6 +56,8 @@ SIGNAL_WEIGHTS = {
 # Velocity (max calls per source in window seconds)
 VELOCITY_MAX_CALLS = int(os.getenv("VELOCITY_MAX_CALLS", "10"))
 VELOCITY_WINDOW_SECONDS = int(os.getenv("VELOCITY_WINDOW_SECONDS", "60"))
+VELOCITY_BACKEND = os.getenv("VELOCITY_BACKEND", "memory")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # Reputation defaults
 DEFAULT_IP_REPUTATION = float(os.getenv("DEFAULT_IP_REPUTATION", "0.5"))
@@ -58,3 +72,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 VULTR_API_KEY = os.getenv("VULTR_API_KEY", "")
 VULTR_INFERENCE_URL = os.getenv("VULTR_INFERENCE_URL", "")
+
+# STIR/SHAKEN verification mode: attestation_only or passport_structural.
+STIR_SHAKEN_VERIFY_MODE = os.getenv("STIR_SHAKEN_VERIFY_MODE", "attestation_only")
+
+# Optional redress notification webhook for ticketing/customer-support systems.
+REDRESS_WEBHOOK_URL = os.getenv("REDRESS_WEBHOOK_URL", "")

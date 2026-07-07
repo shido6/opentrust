@@ -31,7 +31,7 @@ Required before production:
 
 Current repo support:
 
-- API key middleware exists as a development baseline.
+- Tenant-aware API key middleware exists as a baseline; production should still prefer mTLS or short-lived scoped tokens.
 - Structured logs, OpenTelemetry traces, and database decision events provide audit evidence.
 - GitHub Actions provides lint/test/build hooks.
 
@@ -50,6 +50,7 @@ Current repo support:
 - Kamailio config fails open if the Trust API is unavailable.
 - Health checks and Prometheus alert rules are present.
 - Gigapipe collector profile supports centralized telemetry.
+- Redis-backed velocity state is available with `VELOCITY_BACKEND=redis`.
 
 ### Confidentiality
 

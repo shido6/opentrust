@@ -38,6 +38,7 @@ class CallRequest(BaseModel):
     source_ip: str = Field(..., examples=["203.0.113.10"])
     source_carrier: Optional[str] = Field(None, examples=["ExampleCarrier"])
     stir_shaken: Optional[str] = Field(None, examples=["A"])
+    identity_header: Optional[str] = Field(None, examples=["eyJhbGciOiJFUzI1NiJ9...;info=<https://cert.example>;alg=ES256;ppt=shaken"])
     user_agent: Optional[str] = Field(None, examples=["sip-client"])
     timestamp: str = Field(..., examples=["2026-07-06T12:00:00Z"])
 

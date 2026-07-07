@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import RedressRequest as RedressRequestModel, RedressUpdate, RedressResponse, RedressStatus
+from ..notifications import notify_redress
 from ..repositories import redress as redress_repo
 from ..telemetry import redress_time_hist
 
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/v1/redress", tags=["redress"])
 async def create_redress(req: RedressRequestModel, session: AsyncSession = Depends(get_db)):
     record = await redress_repo.create_redress(session, req)
     logger.info("Redress request created", extra={"call_id": req.call_id, "customer_id": req.customer_id})
+    await notify_redress("redress.created", record)
     return RedressResponse(
         id=str(record.id),
         call_id=record.call_id,
@@ -37,6 +39,7 @@ async def update_redress(redress_id: str, req: RedressUpdate, session: AsyncSess
         hours = (record.resolved_at - record.created_at).total_seconds() / 3600
         redress_time_hist.observe(hours)
 
+    await notify_redress("redress.updated", record)
     return RedressResponse(
         id=str(record.id),
         call_id=record.call_id,

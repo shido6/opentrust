@@ -36,14 +36,13 @@ Implemented:
 - Prometheus metrics and OpenTelemetry tracing
 - Gigapipe collector profile and direct OTLP header support
 - Read-only NLP assistant with local, Ollama, OpenAI-compatible, and Vultr provider options
+- Tenant-aware API keys, Redis-backed velocity option, STIR/SHAKEN PASSporT structural parsing, and redress webhooks
 
 Still required before broad ITSP production use:
 
-- Real STIR/SHAKEN PASSporT verification
-- Redis/PostgreSQL-backed velocity and answer-rate state for horizontal scale
-- Tenant-scoped auth/RBAC instead of one global API key
+- Certificate-chain/TNAuthList STIR/SHAKEN validation and persistent answer-rate state
+- Full route-level RBAC beyond tenant-aware API keys
 - Customer allowlist/blocklist tables and APIs
 - Kamailio/Asterisk log ingestion with `call_id` enrichment into Gigapipe
 - Asterisk challenge flow that bridges successful callers to the intended destination
-- Redress notification integrations for email, webhooks, or ticketing systems
 - Compliance readiness controls for SOC 2, HIPAA-adjacent deployments, CPNI, privacy, and investor diligence

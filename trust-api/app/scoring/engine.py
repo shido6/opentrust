@@ -6,7 +6,6 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import (
-    SIGNAL_WEIGHTS,
     THRESHOLD_WARN,
     THRESHOLD_CHALLENGE,
     THRESHOLD_BLOCK,
@@ -18,6 +17,7 @@ from .velocity import velocity_tracker
 from .answer_rate import answer_rate_tracker
 from .dno import dno_signal
 from .policies import policy_signal
+from .stir_shaken import stir_shaken_signal
 
 logger = logging.getLogger("trust-api.scoring")
 
@@ -42,18 +42,7 @@ async def score_and_decide(
     signals.append(await answer_rate_tracker.check(req))
 
     # STIR/SHAKEN
-    if req.stir_shaken:
-        match req.stir_shaken.upper():
-            case "A":
-                signals.append(SignalResult("stir_shaken", +15, None, SIGNAL_WEIGHTS["stir_shaken"]))
-            case "B":
-                signals.append(SignalResult("stir_shaken", +5, None, SIGNAL_WEIGHTS["stir_shaken"] * 0.8))
-            case "C":
-                signals.append(SignalResult("stir_shaken", -10, "low_attestation", SIGNAL_WEIGHTS["stir_shaken"] * 0.9))
-            case _:
-                signals.append(SignalResult("stir_shaken", -5, "unknown_attestation", SIGNAL_WEIGHTS["stir_shaken"] * 0.7))
-    else:
-        signals.append(SignalResult("stir_shaken", -15, "missing_stir_shaken", SIGNAL_WEIGHTS["stir_shaken"]))
+    signals.append(stir_shaken_signal(req))
 
     # Source carrier signal
     if req.source_carrier:

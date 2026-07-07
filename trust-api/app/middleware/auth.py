@@ -2,7 +2,7 @@ import logging
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from ..config import API_KEY, API_KEY_HEADER
+from ..config import API_KEYS, API_KEY_HEADER
 
 logger = logging.getLogger("trust-api.auth")
 
@@ -17,8 +17,13 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
             logger.warning("Missing API key", extra={"path": str(request.url.path)})
             raise HTTPException(status_code=401, detail="Missing API key")
 
-        if api_key != API_KEY:
+        principal = API_KEYS.get(api_key)
+        if not principal:
             logger.warning("Invalid API key")
             raise HTTPException(status_code=403, detail="Invalid API key")
+
+        request.state.tenant_id = principal.get("tenant_id", "default")
+        request.state.role = principal.get("role", "operator")
+        request.state.api_key_name = principal.get("name", "unnamed-key")
 
         return await call_next(request)

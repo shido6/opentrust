@@ -43,6 +43,8 @@ Do not commit these values. Use a secret manager in production.
 | `OPENAI_API_KEY` | Optional | OpenAI-compatible NLP provider |
 | `VULTR_API_KEY` | Optional | Vultr Serverless Inference |
 | `VULTR_INFERENCE_URL` | Optional | Vultr inference endpoint |
+| `REDIS_URL` | Production HA | Redis DSN for shared velocity state |
+| `REDRESS_WEBHOOK_URL` | Optional | Ticketing/customer-support webhook |
 
 ## Fresh Checkout
 
@@ -185,6 +187,31 @@ Core environment variables:
 | `THRESHOLD_CHALLENGE` | `50` | Challenge threshold |
 | `THRESHOLD_BLOCK` | `30` | Low-score analytics block threshold |
 
+Tenant-aware auth example:
+
+```bash
+export API_KEYS='{"kamailio-prod":{"tenant_id":"itsp-main","role":"sip_edge","name":"kamailio-prod"},"ops-key":{"tenant_id":"itsp-main","role":"operator","name":"ops"}}'
+```
+
+Shared velocity state for multi-replica deployments:
+
+```bash
+export VELOCITY_BACKEND=redis
+export REDIS_URL=redis://redis.internal:6379/0
+```
+
+STIR/SHAKEN structural PASSporT parsing:
+
+```bash
+export STIR_SHAKEN_VERIFY_MODE=passport_structural
+```
+
+Redress webhook integration:
+
+```bash
+export REDRESS_WEBHOOK_URL=https://support.example.com/webhooks/opentrust-redress
+```
+
 ## Gigapipe Observability
 
 Preferred production path:
@@ -269,7 +296,7 @@ Kamailio (1+N) → Trust API (2+N behind LB) → PostgreSQL (HA)
 - Enable TLS/mTLS between SIP edge, Trust API, database, collector, and vendors.
 - Configure PostgreSQL backups and restore tests.
 - Configure alert routing for latency, false-positive rate, API downtime, and redress SLA breaches.
-- Move process-local velocity and answer-rate state to Redis/PostgreSQL before horizontal scaling.
+- Set `VELOCITY_BACKEND=redis` before horizontal scaling; answer-rate state still needs persistent backing.
 - Use tenant-scoped auth/RBAC before multi-customer production use.
 - Add log redaction and retention policies for phone numbers and customer identifiers.
 - Validate Kamailio and Asterisk configs in a lab with representative traffic.
@@ -387,7 +414,7 @@ Before production with enterprise, healthcare, government, or regulated customer
 | Gigapipe empty | Collector endpoint/key wrong | Verify `GIGAPIPE_OTLP_ENDPOINT` and `GIGAPIPE_API_KEY` |
 | NLP provider fails | Missing provider key or bad endpoint | Use `NLP_PROVIDER=local` or fix provider env vars |
 | Kamailio allows all calls | Trust API unreachable and fail-open active | Check API health and Kamailio logs |
-| Analytics inconsistent across replicas | In-memory velocity/answer-rate state | Move state to Redis/PostgreSQL |
+| Analytics inconsistent across replicas | Local velocity/answer-rate state | Set `VELOCITY_BACKEND=redis`; move answer-rate state to persistent storage |
 
 ## Engineer Sign-Off
 
