@@ -16,9 +16,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+    op.execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto"')
+
     op.create_table(
         "calls",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("call_id", sa.String(255), nullable=False, unique=True),
         sa.Column("timestamp", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
         sa.Column("from_number", sa.String(32), nullable=False),
@@ -36,12 +39,13 @@ def upgrade() -> None:
     )
     op.create_index("idx_calls_timestamp", "calls", ["timestamp"])
     op.create_index("idx_calls_from_number", "calls", ["from_number"])
+    op.create_index("idx_calls_to_number", "calls", ["to_number"])
     op.create_index("idx_calls_decision", "calls", ["decision"])
     op.create_index("idx_calls_source_carrier", "calls", ["source_carrier"])
 
     op.create_table(
         "decision_events",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("call_id", sa.String(255), sa.ForeignKey("calls.call_id"), nullable=False),
         sa.Column("signal_name", sa.String(128), nullable=False),
         sa.Column("signal_value", sa.Text()),
@@ -50,20 +54,23 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
     )
     op.create_index("idx_decision_events_call_id", "decision_events", ["call_id"])
+    op.create_index("idx_decision_events_reason_code", "decision_events", ["reason_code"])
 
     op.create_table(
         "customer_feedback",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("call_id", sa.String(255), sa.ForeignKey("calls.call_id"), nullable=False),
         sa.Column("customer_id", sa.String(128), nullable=False),
         sa.Column("feedback_type", sa.String(32), nullable=False),
         sa.Column("notes", sa.Text()),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
     )
+    op.create_index("idx_customer_feedback_call_id", "customer_feedback", ["call_id"])
+    op.create_index("idx_customer_feedback_type", "customer_feedback", ["feedback_type"])
 
     op.create_table(
         "dno_entries",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("number", sa.String(32), nullable=False),
         sa.Column("source", sa.String(64), nullable=False),
         sa.Column("reason", sa.Text()),
@@ -75,7 +82,7 @@ def upgrade() -> None:
 
     op.create_table(
         "policies",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("customer_id", sa.String(128), nullable=False),
         sa.Column("policy_name", sa.String(255), nullable=False),
         sa.Column("policy_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::jsonb")),
@@ -84,10 +91,11 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
     )
     op.create_index("idx_policies_customer_id", "policies", ["customer_id"])
+    op.create_index("idx_policies_enabled", "policies", ["enabled"])
 
     op.create_table(
         "redress_requests",
-        sa.Column("id", UUID(), nullable=False, server_default=sa.text("uuid_generate_v4()")),
+        sa.Column("id", UUID(), primary_key=True, nullable=False, server_default=sa.text("uuid_generate_v4()")),
         sa.Column("call_id", sa.String(255), sa.ForeignKey("calls.call_id"), nullable=False),
         sa.Column("customer_id", sa.String(128), nullable=False),
         sa.Column("status", sa.String(32), nullable=False, server_default=sa.text("'open'")),
@@ -97,6 +105,8 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("NOW()")),
     )
+    op.create_index("idx_redress_requests_status", "redress_requests", ["status"])
+    op.create_index("idx_redress_requests_customer_id", "redress_requests", ["customer_id"])
 
     op.create_table(
         "schema_version",

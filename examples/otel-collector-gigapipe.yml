@@ -1,0 +1,48 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  resource:
+    attributes:
+      - key: service.namespace
+        value: opentrust-sip
+        action: upsert
+      - key: deployment.environment
+        value: ${DEPLOYMENT_ENVIRONMENT}
+        action: upsert
+      - key: observability.backend
+        value: gigapipe
+        action: upsert
+
+exporters:
+  otlp/gigapipe:
+    endpoint: ${GIGAPIPE_OTLP_ENDPOINT}
+    headers:
+      authorization: Bearer ${GIGAPIPE_API_KEY}
+    tls:
+      insecure: false
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: opentrust
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [prometheus, otlp/gigapipe]
+    traces:
+      receivers: [otlp]
+      processors: [resource, batch]
+      exporters: [otlp/gigapipe]
+--- /dev/null

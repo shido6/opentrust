@@ -15,7 +15,15 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from prometheus_client import Counter, Histogram, make_asgi_app
 
-from .config import LOG_FORMAT, LOG_LEVEL, OTEL_EXPORTER_OTLP_ENDPOINT
+from .config import (
+    DEPLOYMENT_ENVIRONMENT,
+    LOG_FORMAT,
+    LOG_LEVEL,
+    OBSERVABILITY_BACKEND,
+    OTEL_EXPORTER_OTLP_ENDPOINT,
+    OTEL_EXPORTER_OTLP_HEADERS,
+    SERVICE_NAME,
+)
 
 # --- Prometheus metrics ---
 
@@ -67,6 +75,16 @@ redress_time_hist = Histogram(
 )
 
 
+def _parse_otlp_headers(raw_headers: str) -> dict[str, str]:
+    headers: dict[str, str] = {}
+    for item in raw_headers.split(","):
+        if not item.strip() or "=" not in item:
+            continue
+        key, value = item.split("=", 1)
+        headers[key.strip()] = value.strip()
+    return headers
+
+
 def setup_telemetry(app):
     """Configure OpenTelemetry tracing, metrics, and structured logging."""
 
@@ -103,9 +121,19 @@ def setup_telemetry(app):
 
     # --- OpenTelemetry ---
 
-    resource = Resource.create({"service.name": "trust-api"})
+    resource = Resource.create(
+        {
+            "service.name": SERVICE_NAME,
+            "deployment.environment": DEPLOYMENT_ENVIRONMENT,
+            "observability.backend": OBSERVABILITY_BACKEND,
+        }
+    )
     provider = TracerProvider(resource=resource)
-    otlp_exporter = OTLPSpanExporter(endpoint=OTEL_EXPORTER_OTLP_ENDPOINT, insecure=True)
+    otlp_exporter = OTLPSpanExporter(
+        endpoint=OTEL_EXPORTER_OTLP_ENDPOINT,
+        headers=_parse_otlp_headers(OTEL_EXPORTER_OTLP_HEADERS),
+        insecure=OTEL_EXPORTER_OTLP_ENDPOINT.startswith("http://"),
+    )
     provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
     trace.set_tracer_provider(provider)
 

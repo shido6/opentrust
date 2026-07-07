@@ -12,7 +12,6 @@ from ..config import (
     THRESHOLD_BLOCK,
 )
 from ..models import CallRequest, DecisionType
-from ..repositories.calls import create_decision_event
 from .signals import SignalResult
 from .reputation import ip_reputation_signal, carrier_reputation_signal
 from .velocity import velocity_tracker
@@ -26,7 +25,7 @@ logger = logging.getLogger("trust-api.scoring")
 async def score_and_decide(
     session: AsyncSession,
     req: CallRequest,
-) -> tuple[DecisionType, int, float, list[str]]:
+) -> tuple[DecisionType, int, float, list[str], list[SignalResult]]:
     # Evaluate all signals
     signals: list[SignalResult] = []
 
@@ -84,34 +83,23 @@ async def score_and_decide(
 
     reason_codes = [s.reason_code for s in signals if s.reason_code]
 
-    # Persist signal events
-    for sig in signals:
-        await create_decision_event(
-            session,
-            req.call_id,
-            sig.name,
-            str(sig.score_delta),
-            sig.weight,
-            sig.reason_code,
-        )
-
     # Check for DNO/policy hard block
     for sig in signals:
         if sig.reason_code and sig.reason_code.startswith("dno_match"):
-            return DecisionType.block_dno, trust_score, confidence, reason_codes
+            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals
         if sig.reason_code and sig.reason_code.startswith("policy_block"):
-            return DecisionType.block_dno, trust_score, confidence, reason_codes
+            return DecisionType.block_dno, trust_score, confidence, reason_codes, signals
         if sig.reason_code and sig.reason_code.startswith("policy_allow"):
-            return DecisionType.allow, trust_score, confidence, reason_codes
+            return DecisionType.allow, trust_score, confidence, reason_codes, signals
 
     # Threshold-based decision
     if trust_score >= THRESHOLD_WARN:
-        return DecisionType.allow, trust_score, confidence, reason_codes
+        return DecisionType.allow, trust_score, confidence, reason_codes, signals
     elif trust_score >= THRESHOLD_CHALLENGE:
-        return DecisionType.challenge, trust_score, confidence, reason_codes
+        return DecisionType.challenge, trust_score, confidence, reason_codes, signals
 
     redress_required = trust_score < THRESHOLD_BLOCK
     if redress_required:
-        return DecisionType.block_analytics, trust_score, confidence, reason_codes
+        return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals
 
-    return DecisionType.block_analytics, trust_score, confidence, reason_codes
+    return DecisionType.block_analytics, trust_score, confidence, reason_codes, signals

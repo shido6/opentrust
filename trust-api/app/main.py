@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from .config import LOG_LEVEL
 from .telemetry import setup_telemetry
 from .middleware.auth import APIKeyMiddleware
-from .routers import health, decision, dno, policies, feedback, redress, calls
+from .routers import health, decision, dno, policies, feedback, redress, calls, nlp
 
 
 @asynccontextmanager
@@ -36,3 +36,4 @@ app.include_router(policies.router)
 app.include_router(feedback.router)
 app.include_router(redress.router)
 app.include_router(calls.router)
+app.include_router(nlp.router)

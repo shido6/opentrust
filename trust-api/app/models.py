@@ -81,6 +81,12 @@ class RedressUpdate(BaseModel):
     resolution: Optional[str] = None
 
 
+class NLPQueryRequest(BaseModel):
+    query: str = Field(..., examples=["Why was call abc123 blocked?"])
+    customer_id: Optional[str] = None
+    call_id: Optional[str] = None
+
+
 # --- Response models ---
 
 class DecisionResponse(BaseModel):
@@ -134,3 +140,12 @@ class RedressResponse(BaseModel):
     resolution: Optional[str]
     created_at: str
     updated_at: str
+
+
+class NLPQueryResponse(BaseModel):
+    answer: str
+    intent: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    evidence: list[dict] = Field(default_factory=list)
+    provider: str = "local"
+    requires_approval: bool = False

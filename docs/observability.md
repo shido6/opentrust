@@ -39,7 +39,9 @@ All decisions emit a structured log record:
 |---|---|---|
 | Traces | OTLP gRPC | OpenTelemetry Collector |
 | Metrics | OTLP HTTP | Prometheus / Grafana |
-| Logs | JSON stdout | Filebeat / Loki |
+| Logs | JSON stdout | Collector / Gigapipe |
+
+For production ITSP deployments, use Gigapipe as the OpenTelemetry backend. See [Gigapipe Observability](gigapipe.md) for collector configuration, required correlation fields, and customer-impact dashboard guidance.
 
 ## Key Metrics
 

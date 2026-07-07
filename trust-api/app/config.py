@@ -12,6 +12,10 @@ DATABASE_URL = os.getenv(
 OTEL_EXPORTER_OTLP_ENDPOINT = os.getenv(
     "OTEL_EXPORTER_OTLP_ENDPOINT", "http://otel-collector:4317"
 )
+OTEL_EXPORTER_OTLP_HEADERS = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", "")
+OBSERVABILITY_BACKEND = os.getenv("OBSERVABILITY_BACKEND", "local")
+SERVICE_NAME = os.getenv("SERVICE_NAME", "trust-api")
+DEPLOYMENT_ENVIRONMENT = os.getenv("DEPLOYMENT_ENVIRONMENT", "dev")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
 LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
@@ -44,3 +48,13 @@ VELOCITY_WINDOW_SECONDS = int(os.getenv("VELOCITY_WINDOW_SECONDS", "60"))
 # Reputation defaults
 DEFAULT_IP_REPUTATION = float(os.getenv("DEFAULT_IP_REPUTATION", "0.5"))
 DEFAULT_CARRIER_REPUTATION = float(os.getenv("DEFAULT_CARRIER_REPUTATION", "0.5"))
+
+# NLP assistant provider. Default is deterministic/read-only local responses.
+NLP_PROVIDER = os.getenv("NLP_PROVIDER", "local")
+NLP_MODEL = os.getenv("NLP_MODEL", "")
+NLP_TIMEOUT_SECONDS = float(os.getenv("NLP_TIMEOUT_SECONDS", "10"))
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+VULTR_API_KEY = os.getenv("VULTR_API_KEY", "")
+VULTR_INFERENCE_URL = os.getenv("VULTR_INFERENCE_URL", "")

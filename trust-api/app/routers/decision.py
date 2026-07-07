@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import CallRequest, DecisionResponse, CDRRequest
-from ..repositories.calls import create_call, update_call_cdr
+from ..repositories.calls import create_call, create_decision_event, update_call_cdr
 from ..scoring.engine import score_and_decide
 from ..scoring.answer_rate import answer_rate_tracker
 from ..telemetry import decisions_total, decisions_per_carrier, trust_score_hist, trust_latency
@@ -18,10 +18,20 @@ router = APIRouter(prefix="/v1", tags=["decision"])
 async def decide(req: CallRequest, session: AsyncSession = Depends(get_db)):
     start = time.time()
 
-    decision, trust_score, confidence, reason_codes = await score_and_decide(session, req)
+    decision, trust_score, confidence, reason_codes, signals = await score_and_decide(session, req)
 
     # Persist call record
     await create_call(session, req, decision.value, trust_score, confidence)
+
+    for sig in signals:
+        await create_decision_event(
+            session,
+            req.call_id,
+            sig.name,
+            str(sig.score_delta),
+            sig.weight,
+            sig.reason_code,
+        )
 
     # Metrics
     carrier = req.source_carrier or "unknown"

@@ -30,6 +30,8 @@ Asterisk (only when media interaction needed)
 - **Kamailio** — SIP policy enforcement point
 - **Trust API** — Policy + evidence + analytics scoring engine
 - **Asterisk** — IVR challenge / voicemail screening (media-only)
+- **Gigapipe** — production observability sink for traces, metrics, logs, and customer-impact investigations
+- **NLP Assistant** — read-only operations assistant using local templates, Ollama, OpenAI-compatible APIs, or Vultr Serverless Inference
 
 ## Decision Types
 
@@ -76,6 +78,10 @@ opentrust-sip/
     sip-603-plus.md
     observability.md
     deployment.md
+    gigapipe.md
+    nlp-assistant.md
+    compliance-readiness.md
+    customer-itsp-readiness.md
   kamailio/
     route-examples/
     trust-api.cfg
@@ -119,6 +125,35 @@ curl -X POST http://localhost:8000/v1/decision \
     "timestamp": "2026-07-06T12:00:00Z"
   }'
 ```
+
+## Production Observability With Gigapipe
+
+```bash
+export GIGAPIPE_OTLP_ENDPOINT="https://YOUR-GIGAPIPE-OTLP-ENDPOINT:4317"
+export GIGAPIPE_API_KEY="YOUR-GIGAPIPE-API-KEY"
+
+docker compose \
+  -f examples/docker-compose.yml \
+  -f examples/docker-compose.gigapipe.yml \
+  up -d
+```
+
+See `docs/gigapipe.md` for customer-impact telemetry, correlation fields, and Gigapipe setup.
+
+## Talk To The System
+
+The NLP assistant is read-only by default and answers from stored audit evidence.
+
+```bash
+curl -X POST http://localhost:8000/v1/nlp/query \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: dev-api-key' \
+  -d '{"query":"Why was call abc123 blocked?","call_id":"abc123"}'
+```
+
+Set `NLP_PROVIDER=local`, `ollama`, `openai`, or `vultr` to choose the backend. See `docs/nlp-assistant.md`.
+
+For compliance and investor diligence posture, see `docs/compliance-readiness.md`.
 
 ## Success Metrics
 

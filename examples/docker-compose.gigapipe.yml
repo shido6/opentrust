@@ -1,0 +1,14 @@
+services:
+  trust-api:
+    environment:
+      - OBSERVABILITY_BACKEND=gigapipe
+      - DEPLOYMENT_ENVIRONMENT=${DEPLOYMENT_ENVIRONMENT:-dev}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+
+  otel-collector:
+    environment:
+      - DEPLOYMENT_ENVIRONMENT=${DEPLOYMENT_ENVIRONMENT:-dev}
+      - GIGAPIPE_OTLP_ENDPOINT=${GIGAPIPE_OTLP_ENDPOINT}
+      - GIGAPIPE_API_KEY=${GIGAPIPE_API_KEY}
+    volumes:
+      - ./otel-collector-gigapipe.yml:/etc/otel-collector.yml
