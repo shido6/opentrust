@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: opentrust-api
+    static_configs:
+      - targets: ["trust-api:8000"]
+
+  - job_name: opentrust-otel-collector
+    static_configs:
+      - targets: ["otel-collector:8889"]

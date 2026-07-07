@@ -1,0 +1,57 @@
+{
+  "title": "OpenTrust SIP — Trust Overview",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Decisions per Minute",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(opentrust_trust_decisions_total[1m])",
+          "legendFormat": "{{decision}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Trust Score Distribution",
+      "type": "heatmap",
+      "targets": [
+        {
+          "expr": "opentrust_trust_score_bucket",
+          "format": "heatmap"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "title": "API Latency (p50/p95/p99)",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(opentrust_trust_latency_bucket[5m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(opentrust_trust_latency_bucket[5m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(opentrust_trust_latency_bucket[5m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "title": "Decisions by Carrier",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (carrier) (opentrust_trust_decisions_per_carrier_total)"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    }
+  ]
+}

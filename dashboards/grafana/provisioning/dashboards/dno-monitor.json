@@ -1,0 +1,36 @@
+{
+  "title": "OpenTrust SIP — DNO Monitor",
+  "version": 1,
+  "panels": [
+    {
+      "title": "DNO Matches (24h)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(opentrust_trust_dno_matches_total[24h])"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "title": "DNO Matches by Source",
+      "type": "piechart",
+      "targets": [
+        {
+          "expr": "sum by (source) (opentrust_trust_dno_matches_total)"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "title": "Active DNO Entries Over Time",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "opentrust_dno_active_entries"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 }
+    }
+  ]
+}

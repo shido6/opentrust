@@ -1,0 +1,26 @@
+{
+  "title": "OpenTrust SIP — Carrier Reputation",
+  "version": 1,
+  "panels": [
+    {
+      "title": "Top Carriers by Decision Volume",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (carrier) (opentrust_trust_decisions_per_carrier_total))"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Carrier Block Rate",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(opentrust_trust_decisions_per_carrier_total{decision=\"block\"}[1h]) / rate(opentrust_trust_decisions_per_carrier_total[1h])"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    }
+  ]
+}

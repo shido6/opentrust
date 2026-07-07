@@ -1,0 +1,48 @@
+{
+  "title": "OpenTrust SIP — False Positive Analysis",
+  "version": 1,
+  "panels": [
+    {
+      "title": "False Positive Rate (24h)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(opentrust_trust_false_positive_total[24h]) / rate(opentrust_trust_decisions_total[24h]) * 100"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "title": "Customer Override Rate",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(opentrust_trust_customer_override_total[24h])"
+        }
+      ],
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "title": "False Positives Over Time",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "rate(opentrust_trust_false_positive_total[5m])",
+          "legendFormat": "FP rate"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 }
+    },
+    {
+      "title": "Redress Resolution Time",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(opentrust_trust_redress_time_bucket[24h]))",
+          "legendFormat": "p95 redress time"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 }
+    }
+  ]
+}

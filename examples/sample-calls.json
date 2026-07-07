@@ -1,0 +1,98 @@
+[
+  {
+    "call_id": "call-high-trust-001",
+    "from_number": "+15551234567",
+    "to_number": "+15559876543",
+    "source_ip": "203.0.113.10",
+    "source_carrier": "VerifiedCarrier",
+    "stir_shaken": "A",
+    "user_agent": "Grandstream-GXP2170",
+    "timestamp": "2026-07-06T12:00:00Z"
+  },
+  {
+    "call_id": "call-medium-trust-002",
+    "from_number": "+15555550101",
+    "to_number": "+15559876543",
+    "source_ip": "198.51.100.20",
+    "source_carrier": "UnknownCarrier",
+    "stir_shaken": "B",
+    "user_agent": "sip-client",
+    "timestamp": "2026-07-06T12:01:00Z"
+  },
+  {
+    "call_id": "call-low-trust-003",
+    "from_number": "+15555550102",
+    "to_number": "+15559876543",
+    "source_ip": "192.0.2.50",
+    "stir_shaken": "C",
+    "user_agent": "friendly-scanner",
+    "timestamp": "2026-07-06T12:02:00Z"
+  },
+  {
+    "call_id": "call-dno-match-004",
+    "from_number": "+18005551234",
+    "to_number": "+15559876543",
+    "source_ip": "203.0.113.99",
+    "source_carrier": "SuspiciousCarrier",
+    "stir_shaken": "A",
+    "user_agent": "sip-client",
+    "timestamp": "2026-07-06T12:03:00Z"
+  },
+  {
+    "call_id": "call-no-stir-005",
+    "from_number": "+15555550105",
+    "to_number": "+15559876543",
+    "source_ip": "198.51.100.30",
+    "source_carrier": "NewCarrier",
+    "timestamp": "2026-07-06T12:04:00Z"
+  },
+  {
+    "call_id": "call-enterprise-006",
+    "from_number": "+14155551212",
+    "to_number": "+15559876543",
+    "source_ip": "10.0.0.100",
+    "source_carrier": "EnterpriseCustomer",
+    "stir_shaken": "A",
+    "user_agent": "Cisco-SIPGateway",
+    "timestamp": "2026-07-06T12:05:00Z"
+  },
+  {
+    "call_id": "call-warn-velocity-007",
+    "from_number": "+15555550107",
+    "to_number": "+15559876543",
+    "source_ip": "203.0.113.200",
+    "source_carrier": "RapidDialInc",
+    "stir_shaken": "B",
+    "user_agent": "sip-client",
+    "timestamp": "2026-07-06T12:06:00Z"
+  },
+  {
+    "call_id": "call-fraud-attempt-008",
+    "from_number": "+15555559999",
+    "to_number": "+15559876543",
+    "source_ip": "192.0.2.150",
+    "stir_shaken": "C",
+    "user_agent": "python-requests",
+    "timestamp": "2026-07-06T12:07:00Z"
+  },
+  {
+    "call_id": "call-challenge-redirect-009",
+    "from_number": "+15555550109",
+    "to_number": "+15559876543",
+    "source_ip": "198.51.100.40",
+    "source_carrier": "BorderCarrier",
+    "stir_shaken": "B",
+    "user_agent": "Linksys-SPA942",
+    "timestamp": "2026-07-06T12:08:00Z"
+  },
+  {
+    "call_id": "call-known-good-010",
+    "from_number": "+15551234500",
+    "to_number": "+15559876543",
+    "source_ip": "203.0.113.5",
+    "source_carrier": "VerifiedCarrier",
+    "stir_shaken": "A",
+    "user_agent": "Polycom-VVX411",
+    "timestamp": "2026-07-06T12:09:00Z"
+  }
+]
