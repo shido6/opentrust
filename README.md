@@ -7,6 +7,10 @@ Make call-blocking and fraud-prevention decisions explainable, observable, audit
 [!CAUTION]
 This is not "AI blocks calls." The engine recommends. The carrier controls policy. Every decision must be explainable and replayable.
 
+## Infographic
+
+![OpenTrust SIP carrier trust platform infographic](opentrust.png)
+
 ## Architecture
 
 ```
