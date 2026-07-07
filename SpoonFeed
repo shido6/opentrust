@@ -1,0 +1,359 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_NAME="OpenTrust SIP"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="${ROOT_DIR}/.env"
+COMPOSE_FILES=("-f" "examples/docker-compose.yml")
+
+MODE="dev"
+ENABLE_GIGAPIPE="false"
+NLP_PROVIDER="local"
+START_STACK="true"
+RUN_SMOKE="true"
+FORCE_ENV="false"
+DRY_RUN="false"
+
+API_KEY="${API_KEY:-dev-api-key}"
+GRAFANA_PASSWORD="${GF_SECURITY_ADMIN_PASSWORD:-admin}"
+DEPLOYMENT_ENVIRONMENT="${DEPLOYMENT_ENVIRONMENT:-dev}"
+GIGAPIPE_OTLP_ENDPOINT="${GIGAPIPE_OTLP_ENDPOINT:-}"
+GIGAPIPE_API_KEY="${GIGAPIPE_API_KEY:-}"
+OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
+OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+OPENAI_BASE_URL="${OPENAI_BASE_URL:-https://api.openai.com/v1}"
+VULTR_API_KEY="${VULTR_API_KEY:-}"
+VULTR_INFERENCE_URL="${VULTR_INFERENCE_URL:-}"
+NLP_MODEL="${NLP_MODEL:-}"
+
+print_usage() {
+  cat <<'EOF'
+SpoonFeed - OpenTrust SIP guided installer
+
+Usage:
+  ./SpoonFeed [options]
+
+Common:
+  ./SpoonFeed
+  ./SpoonFeed --with-gigapipe
+  ./SpoonFeed --nlp ollama
+  ./SpoonFeed --nlp openai
+  ./SpoonFeed --nlp vultr
+  ./SpoonFeed --no-start
+  ./SpoonFeed --smoke-only
+
+Options:
+  --mode dev|pilot|production     Deployment posture label. Default: dev
+  --with-gigapipe                 Enable examples/docker-compose.gigapipe.yml
+  --nlp local|ollama|openai|vultr NLP assistant provider. Default: local
+  --api-key VALUE                 Trust API key. Default: dev-api-key
+  --grafana-password VALUE        Grafana admin password. Default: admin
+  --deployment-env VALUE          Telemetry deployment.environment. Default: dev
+  --force-env                     Overwrite existing .env
+  --no-start                      Generate config but do not run Docker Compose
+  --no-smoke                      Skip smoke tests
+  --smoke-only                    Run smoke tests against an existing stack
+  --dry-run                       Print actions without executing them
+  --help                          Show help
+
+Environment overrides:
+  GIGAPIPE_OTLP_ENDPOINT, GIGAPIPE_API_KEY
+  OLLAMA_BASE_URL
+  OPENAI_API_KEY, OPENAI_BASE_URL
+  VULTR_API_KEY, VULTR_INFERENCE_URL
+  NLP_MODEL
+
+Production note:
+  SpoonFeed is a bootstrap helper. For real production, move secrets to a
+  secret manager, use TLS/mTLS, configure backups, and review docs/deployment.md
+  and docs/compliance-readiness.md.
+EOF
+}
+
+log() {
+  printf '[SpoonFeed] %s\n' "$*"
+}
+
+warn() {
+  printf '[SpoonFeed][WARN] %s\n' "$*" >&2
+}
+
+fail() {
+  printf '[SpoonFeed][ERROR] %s\n' "$*" >&2
+  exit 1
+}
+
+run() {
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    printf '[SpoonFeed][DRY-RUN]'
+    printf ' %q' "$@"
+    printf '\n'
+    return 0
+  fi
+  "$@"
+}
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || fail "Missing required command: $1"
+}
+
+compose_cmd() {
+  if docker compose version >/dev/null 2>&1; then
+    echo "docker compose"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    echo "docker-compose"
+  else
+    fail "Docker Compose is required. Install Docker Desktop, docker compose plugin, or docker-compose."
+  fi
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --mode)
+        MODE="${2:-}"
+        shift 2
+        ;;
+      --with-gigapipe)
+        ENABLE_GIGAPIPE="true"
+        shift
+        ;;
+      --nlp)
+        NLP_PROVIDER="${2:-}"
+        shift 2
+        ;;
+      --api-key)
+        API_KEY="${2:-}"
+        shift 2
+        ;;
+      --grafana-password)
+        GRAFANA_PASSWORD="${2:-}"
+        shift 2
+        ;;
+      --deployment-env)
+        DEPLOYMENT_ENVIRONMENT="${2:-}"
+        shift 2
+        ;;
+      --force-env)
+        FORCE_ENV="true"
+        shift
+        ;;
+      --no-start)
+        START_STACK="false"
+        shift
+        ;;
+      --no-smoke)
+        RUN_SMOKE="false"
+        shift
+        ;;
+      --smoke-only)
+        START_STACK="false"
+        RUN_SMOKE="true"
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN="true"
+        shift
+        ;;
+      --help|-h)
+        print_usage
+        exit 0
+        ;;
+      *)
+        fail "Unknown option: $1"
+        ;;
+    esac
+  done
+
+  case "${MODE}" in
+    dev|pilot|production) ;;
+    *) fail "--mode must be dev, pilot, or production" ;;
+  esac
+
+  case "${NLP_PROVIDER}" in
+    local|ollama|openai|vultr) ;;
+    *) fail "--nlp must be local, ollama, openai, or vultr" ;;
+  esac
+}
+
+check_prereqs() {
+  log "Checking prerequisites"
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    for cmd in docker curl python3; do
+      if ! command -v "${cmd}" >/dev/null 2>&1; then
+        warn "Dry-run: missing command: ${cmd}"
+      fi
+    done
+    return 0
+  fi
+
+  need_cmd docker
+  need_cmd curl
+  need_cmd python3
+  compose_cmd >/dev/null
+}
+
+write_env() {
+  if [[ -f "${ENV_FILE}" && "${FORCE_ENV}" != "true" ]]; then
+    warn ".env already exists; leaving it untouched. Use --force-env to regenerate."
+    return 0
+  fi
+
+  log "Writing .env"
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    log "Would write ${ENV_FILE}"
+    return 0
+  fi
+
+  cat >"${ENV_FILE}" <<EOF
+# Generated by SpoonFeed for ${APP_NAME}
+DEPLOYMENT_ENVIRONMENT=${DEPLOYMENT_ENVIRONMENT}
+API_KEY=${API_KEY}
+API_KEYS={"${API_KEY}":{"tenant_id":"default","role":"admin","name":"spoonfeed-default"}}
+GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+
+# Trust API defaults
+LOG_LEVEL=info
+LOG_FORMAT=json
+OBSERVABILITY_BACKEND=local
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+
+# Velocity / scaling
+VELOCITY_BACKEND=memory
+REDIS_URL=redis://localhost:6379/0
+
+# STIR/SHAKEN
+STIR_SHAKEN_VERIFY_MODE=attestation_only
+
+# Redress notifications
+REDRESS_WEBHOOK_URL=
+
+# NLP assistant
+NLP_PROVIDER=${NLP_PROVIDER}
+NLP_MODEL=${NLP_MODEL}
+OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
+OPENAI_API_KEY=${OPENAI_API_KEY}
+OPENAI_BASE_URL=${OPENAI_BASE_URL}
+VULTR_API_KEY=${VULTR_API_KEY}
+VULTR_INFERENCE_URL=${VULTR_INFERENCE_URL}
+
+# Gigapipe
+GIGAPIPE_OTLP_ENDPOINT=${GIGAPIPE_OTLP_ENDPOINT}
+GIGAPIPE_API_KEY=${GIGAPIPE_API_KEY}
+EOF
+
+  chmod 0600 "${ENV_FILE}"
+}
+
+validate_optional_settings() {
+  if [[ "${ENABLE_GIGAPIPE}" == "true" ]]; then
+    COMPOSE_FILES+=("-f" "examples/docker-compose.gigapipe.yml")
+    if [[ -z "${GIGAPIPE_OTLP_ENDPOINT}" || -z "${GIGAPIPE_API_KEY}" ]]; then
+      warn "Gigapipe enabled but GIGAPIPE_OTLP_ENDPOINT or GIGAPIPE_API_KEY is empty. Collector may fail to export."
+    fi
+  fi
+
+  if [[ "${NLP_PROVIDER}" == "openai" && -z "${OPENAI_API_KEY}" ]]; then
+    warn "NLP provider openai selected but OPENAI_API_KEY is empty. The API will fall back to deterministic answer plus provider error."
+  fi
+
+  if [[ "${NLP_PROVIDER}" == "vultr" && ( -z "${VULTR_API_KEY}" || -z "${VULTR_INFERENCE_URL}" ) ]]; then
+    warn "NLP provider vultr selected but VULTR_API_KEY or VULTR_INFERENCE_URL is empty."
+  fi
+}
+
+start_stack() {
+  [[ "${START_STACK}" == "true" ]] || return 0
+
+  local compose
+  compose="$(compose_cmd)"
+
+  log "Starting Docker Compose stack"
+  # shellcheck disable=SC2086
+  run ${compose} "${COMPOSE_FILES[@]}" --env-file .env up -d --build
+}
+
+wait_for_api() {
+  log "Waiting for Trust API health"
+  for _ in $(seq 1 60); do
+    if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
+      log "Trust API is healthy"
+      return 0
+    fi
+    sleep 2
+  done
+  fail "Trust API did not become healthy on http://localhost:8000/health"
+}
+
+smoke_tests() {
+  [[ "${RUN_SMOKE}" == "true" ]] || return 0
+  [[ "${DRY_RUN}" != "true" ]] || { log "Skipping smoke tests in dry-run mode"; return 0; }
+
+  wait_for_api
+
+  local call_id="spoonfeed-$(date +%s)"
+
+  log "Submitting decision smoke test: ${call_id}"
+  curl -fsS -X POST http://localhost:8000/v1/decision \
+    -H 'Content-Type: application/json' \
+    -H "X-API-Key: ${API_KEY}" \
+    -d "{\"call_id\":\"${call_id}\",\"from_number\":\"+15551234567\",\"to_number\":\"+15559876543\",\"source_ip\":\"203.0.113.10\",\"source_carrier\":\"SpoonFeedCarrier\",\"stir_shaken\":\"A\",\"user_agent\":\"spoonfeed\",\"timestamp\":\"2026-07-06T12:00:00Z\"}" \
+    >/tmp/opentrust-spoonfeed-decision.json
+
+  python3 -m json.tool /tmp/opentrust-spoonfeed-decision.json >/dev/null
+
+  log "Checking audit replay"
+  curl -fsS -H "X-API-Key: ${API_KEY}" "http://localhost:8000/v1/calls/${call_id}" \
+    >/tmp/opentrust-spoonfeed-audit.json
+  python3 -m json.tool /tmp/opentrust-spoonfeed-audit.json >/dev/null
+
+  log "Checking NLP assistant"
+  curl -fsS -X POST http://localhost:8000/v1/nlp/query \
+    -H 'Content-Type: application/json' \
+    -H "X-API-Key: ${API_KEY}" \
+    -d "{\"query\":\"Why was call ${call_id} handled this way?\",\"call_id\":\"${call_id}\"}" \
+    >/tmp/opentrust-spoonfeed-nlp.json
+  python3 -m json.tool /tmp/opentrust-spoonfeed-nlp.json >/dev/null
+
+  log "Checking metrics endpoint"
+  curl -fsS http://localhost:8000/metrics >/dev/null
+}
+
+print_summary() {
+  cat <<EOF
+
+SpoonFeed complete.
+
+URLs:
+  Trust API:   http://localhost:8000
+  API docs:    http://localhost:8000/docs
+  Metrics:     http://localhost:8000/metrics
+  Prometheus:  http://localhost:9090
+  Grafana:     http://localhost:3000
+
+Credentials:
+  X-API-Key:   ${API_KEY}
+  Grafana:     admin / ${GRAFANA_PASSWORD}
+
+Next reads:
+  docs/deployment.md
+  docs/how-it-works.md
+  docs/compliance-readiness.md
+EOF
+}
+
+main() {
+  parse_args "$@"
+
+  cd "${ROOT_DIR}"
+
+  log "Preparing ${APP_NAME} (${MODE})"
+  check_prereqs
+  write_env
+  validate_optional_settings
+  start_stack
+  smoke_tests
+  print_summary
+}
+
+main "$@"

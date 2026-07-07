@@ -10,8 +10,24 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://opentrust:opentrust@db:5432/opentrust
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - LOG_LEVEL=info
-      - API_KEY=dev-api-key
+      - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS:-}
+      - OBSERVABILITY_BACKEND=${OBSERVABILITY_BACKEND:-local}
+      - DEPLOYMENT_ENVIRONMENT=${DEPLOYMENT_ENVIRONMENT:-dev}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - API_KEY=${API_KEY:-dev-api-key}
+      - API_KEYS=${API_KEYS:-}
+      - VELOCITY_BACKEND=${VELOCITY_BACKEND:-memory}
+      - REDIS_URL=${REDIS_URL:-redis://localhost:6379/0}
+      - STIR_SHAKEN_VERIFY_MODE=${STIR_SHAKEN_VERIFY_MODE:-attestation_only}
+      - REDRESS_WEBHOOK_URL=${REDRESS_WEBHOOK_URL:-}
+      - NLP_PROVIDER=${NLP_PROVIDER:-local}
+      - NLP_MODEL=${NLP_MODEL:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://localhost:11434}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - VULTR_API_KEY=${VULTR_API_KEY:-}
+      - VULTR_INFERENCE_URL=${VULTR_INFERENCE_URL:-}
     depends_on:
       db:
         condition: service_healthy
@@ -63,7 +79,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD:-admin}
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - ../dashboards/grafana/provisioning:/etc/grafana/provisioning

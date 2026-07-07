@@ -61,6 +61,16 @@ ls README.md trust-api database kamailio asterisk examples docs
 
 ## Quick Start (Development)
 
+Recommended bootstrap path:
+
+```bash
+./SpoonFeed
+```
+
+SpoonFeed generates `.env`, starts the Compose stack, and runs smoke tests. See `docs/spoonfeed.md` for options.
+
+Manual path:
+
 ```bash
 docker compose -f examples/docker-compose.yml up -d
 ```

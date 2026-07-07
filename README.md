@@ -65,6 +65,20 @@ Do not mix them. DNO match = deterministic policy. High risk score = probabilist
 | 4 — Block | DNO blocks + analytics blocks separated |
 | 5 — Closed-Loop | Feedback + redress → improved scoring |
 
+## SpoonFeed Installer
+
+Fresh clone to running local stack:
+
+```bash
+./SpoonFeed
+```
+
+SpoonFeed generates `.env`, starts Docker Compose, waits for the Trust API, and runs smoke tests for decisioning, audit replay, NLP, and metrics.
+
+Use `./SpoonFeed --help` for Gigapipe and NLP provider options.
+
+See `docs/spoonfeed.md` for details.
+
 ## Repo Structure
 
 ```
@@ -79,6 +93,7 @@ opentrust-sip/
     observability.md
     deployment.md
     how-it-works.md
+    spoonfeed.md
     gigapipe.md
     nlp-assistant.md
     compliance-readiness.md
