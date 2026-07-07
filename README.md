@@ -78,6 +78,7 @@ opentrust-sip/
     sip-603-plus.md
     observability.md
     deployment.md
+    how-it-works.md
     gigapipe.md
     nlp-assistant.md
     compliance-readiness.md
@@ -154,6 +155,10 @@ curl -X POST http://localhost:8000/v1/nlp/query \
 Set `NLP_PROVIDER=local`, `ollama`, `openai`, or `vultr` to choose the backend. See `docs/nlp-assistant.md`.
 
 For compliance and investor diligence posture, see `docs/compliance-readiness.md`.
+
+## How It Works
+
+For a business and technical walkthrough of how OpenTrust SIP works and how both ITSPs and customers win, see `docs/how-it-works.md`.
 
 ## Grafana Dashboards
 
