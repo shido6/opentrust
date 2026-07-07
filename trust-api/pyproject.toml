@@ -1,0 +1,9 @@
+[project]
+name = "opentrust-trust-api"
+version = "0.2.0"
+description = "OpenTrust SIP Trust Engine API"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

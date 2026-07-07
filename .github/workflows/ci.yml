@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check trust-api/ --output-format=github
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: opentrust
+          POSTGRES_PASSWORD: opentrust
+          POSTGRES_DB: opentrust
+        options: >-
+          --health-cmd pg_isready -U opentrust
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        working-directory: trust-api
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+      - name: Seed database
+        working-directory: database
+        run: psql -h localhost -U opentrust -d opentrust -f schema.sql
+        env:
+          PGPASSWORD: opentrust
+      - name: Run tests
+        working-directory: trust-api
+        run: pytest -v
+        env:
+          DATABASE_URL: postgresql+asyncpg://opentrust:opentrust@localhost:5432/opentrust
+          API_KEY: test-key
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t opentrust/trust-api:ci trust-api/
